@@ -1,17 +1,36 @@
-FROM openjdk:8u111-jdk-alpine
+# Extending image
+FROM node:carbon
 
-MAINTAINER Sample
-RUN apk --no-cache add curl
-RUN mkdir WORKDIR /home/instance/
-RUN mkdir WORKDIR /home/instance/sample-node-ap
+RUN apt-get update
+RUN apt-get upgrade -y
+RUN apt-get -y install autoconf automake libtool nasm make pkg-config git apt-utils
 
-RUN chmod +x WORKDIR /home/instance/sample-node-ap/*.sh
+# Create app directory
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+
+# Versions
+RUN npm -v
+RUN node -v
+
+# Install app dependencies
+COPY package.json /usr/src/app/
+COPY package-lock.json /usr/src/app/
 
 RUN npm install
 
-CMD [ "node", "app.js" ]
+# Bundle app source
+COPY . /usr/src/app
 
-ENV Sample 8081
-EXPOSE 8081
+# Port to listener
+EXPOSE 3000
 
+# Environment variables
+ENV NODE_ENV production
+ENV PORT 3000
+ENV PUBLIC_PATH "/"
 
+RUN npm run start:build
+
+# Main command
+CMD [ "npm", "run", "start:server" ]
